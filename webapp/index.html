@@ -2,9 +2,19 @@
 <html>
 
 	<head>
+
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 		<meta charset="UTF-8">
 		<meta name="viewport" content="minimal-ui, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+		<meta name="mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+
+		<link rel="apple-touch-icon" sizes="144x144" href="images/favicon-144.png?v=2">
+		<link rel="apple-touch-icon" sizes="114x114" href="images/favicon-114.png?v=2">
+		<link rel="apple-touch-icon" sizes="72x72" href="images/favicon-72.png?v=2">
+		<link rel="apple-touch-icon" sizes="57x57" href="images/favicon-57.png?v=2">
+		<link rel="shortcut icon" href="images/favicon.ico?v=2" type="image/x-icon" />
+
 		<title>DeviceX User Interface</title>
 
 		<style>
@@ -26,18 +36,18 @@
 		    }
 		    #splash-screen > * {
 		        /* center child divs  */
-		        
+
 		        position: absolute;
 		        top: 50%;
 		        left: 50%;
 		        /* x-border-box */
-		        
+
 		        box-sizing: border-box;
 		        -moz-box-sizing: border-box;
 		        -ms-box-sizing: border-box;
 		        -webkit-box-sizing: border-box;
 		        /* x-unselectable */
-		        
+
 		        user-select: none;
 		        -o-user-select: none;
 		        -ms-user-select: none;
@@ -136,8 +146,8 @@
 		            -webkit-transform: rotate(360deg);
 		        }
 		    }
-		</style>	
-  
+		</style>
+
 		<script id="sap-ui-bootstrap"
 			src="../../resources/sap-ui-core.js"
 			data-sap-ui-libs="sap.m"

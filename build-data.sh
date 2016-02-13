@@ -159,7 +159,7 @@ function build_data {
 	cp $DEST/manifest.json		 													data/www
 	cp $DEST/i18n/i18n.properties													data/www/i18n
 	cp $DEST/data/app.json															data/www/data
-	cp $DEST/images/background.jpg													data/www/images
+	cp $DEST/images/*																data/www/images
 	cat $DEST/index.html | sed 's/src="..\/..\/resources\/sap-ui-core.js"/src="https:\/\/openui5.hana.ondemand.com\/resources\/sap-ui-core.js"/' >> data/www/index_sta.html
 	cat $DEST/index.html | sed 's/src="..\/..\/resources\/sap-ui-core.js"/src="resources\/sap-ui-core.js"/' >> data/www/index_ap.html
 	cp data/www/index_ap.html data/www/index.html
