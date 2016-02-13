@@ -1,16 +1,17 @@
-<mvc:View 
-	controllerName="com.penninkhof.espui.controller.Configuration" 
-	xmlns:core="sap.ui.core" 
+<mvc:View
+	controllerName="com.penninkhof.espui.controller.Configuration"
+	xmlns:core="sap.ui.core"
 	xmlns:html="http://www.w3.org/1999/xhtml"
-	xmlns:mvc="sap.ui.core.mvc" 
+	xmlns:mvc="sap.ui.core.mvc"
 	xmlns:f="sap.ui.layout.form"
 	xmlns:l="sap.ui.layout"
 	xmlns="sap.m">
-	<Page 
-		title="{config>/friendlyName} {i18n>configTitle}" 
-		showNavButton="true" 
+	<Page
+		title="{config>/friendlyName} {i18n>configTitle}"
+		showNavButton="true"
 		navButtonPress="onNavBack">
 		<headerContent>
+			<Text text="{status>/diagnostics/localTime}" class="sapUiTinyMarginEnd" />
 			<core:Icon id="connectedIcon" src="sap-icon://disconnected" class="sapUiTinyMarginEnd" />
 		</headerContent>
 		<content>
@@ -20,7 +21,7 @@
 			    <l:content>
 			        <f:SimpleForm
 						editable="true" layout="ResponsiveGridLayout" title="WiFi"
-						labelSpanL="4" labelSpanM="4" emptySpanL="1" emptySpanM="1" 
+						labelSpanL="4" labelSpanM="4" emptySpanL="1" emptySpanM="1"
 						columnsL="1" columnsM="1" class="editableForm">
 						<f:content>
 							<Label text="SSID" />
@@ -43,7 +44,7 @@
 			    <l:content>
 			        <f:SimpleForm
 						editable="true" layout="ResponsiveGridLayout" title="MQTT"
-						labelSpanL="4" labelSpanM="4" emptySpanL="1" emptySpanM="1" 
+						labelSpanL="4" labelSpanM="4" emptySpanL="1" emptySpanM="1"
 						columnsL="1" columnsM="1" class="editableForm">
 			            <f:content>
 							<Label text="Server" />

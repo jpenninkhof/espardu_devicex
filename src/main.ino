@@ -64,71 +64,64 @@ const char * espToNodePin(const uint8_t pin) {
 }
 
 String getDiagnostics() {
-	char value[50] = "";
-	WiFiClient client = server.client();
+	// Voltage
 	float servolt1 = ESP.getVcc();
+	// Speed count
 	unsigned long spdcount = ESP.getCycleCount();
 	delay(1);
 	unsigned long spdcount1 = ESP.getCycleCount();
 	unsigned long speedcnt = spdcount1-spdcount;
+	// Flash-chip Mode
 	FlashMode_t ideMode = ESP.getFlashChipMode();
-	String uptime = "";
-	int hr,mn,st;
+	// Uptime
+	char uptime[10];
+	int hr, mn, st;
 	st = millis() / 1000;
 	mn = st / 60;
 	hr = st / 3600;
 	st = st - mn * 60;
 	mn = mn - hr * 60;
-	if (hr<10) {uptime += ("0");}
-	uptime += (hr);
-	uptime += (":");
-	if (mn<10) {uptime += ("0");}
-	uptime += (mn);
-	uptime += (":");
-	if (st<10) {uptime += ("0");}
-	uptime += (st);
-	String status = String("{");
-	status.concat("\"hostname\":\"");
-	status.concat(WiFi.hostname());
-	status.concat("\"ip\":\"");
-	status.concat(WiFi.localIP());
-	status.concat("\",\"freeRam\":");
-	status.concat(ESP.getFreeHeap() / 1024);	// KBytes
-	status.concat(",\"sdkVersion\":\"");
-	status.concat(ESP.getSdkVersion());
-	status.concat("\",\"bootVersion\":");
-	status.concat(ESP.getBootVersion());
-	status.concat(",\"freeSketchSpace\":"); // KBytes
-	status.concat(ESP.getFreeSketchSpace()/1024);
-	status.concat(",\"sketchSize\":"); // KBytes
-	status.concat(ESP.getSketchSize()/1024);
-	status.concat(",\"flashChipId\":\"");
-	sprintf(value, "%08x", ESP.getFlashChipId());
-	status.concat(value);
-	status.concat("\",\"flashChipMode\":\"");
-	status.concat(ideMode == FM_QIO ? "QIO" : ideMode == FM_QOUT ? "QOUT" : ideMode == FM_DIO ? "DIO" : ideMode == FM_DOUT ? "DOUT" : "UNKNOWN");
-	status.concat("\",\"flashSizeByID\":"); // KBytes
-	status.concat(ESP.getFlashChipRealSize()/1024);
-	status.concat(",\"flashSizeIDE\":"); // KBytes
-	status.concat(ESP.getFlashChipSize()/1024);
-	status.concat(",\"flashSpeed\":"); // MHz
-	status.concat(ESP.getFlashChipSpeed()/1000000);
-	status.concat(",\"cpuSpeed\":"); // MHz
-	status.concat(ESP.getCpuFreqMHz());
-	status.concat(",\"cpuChipId\":\"");
-	sprintf(value, "%08x", ESP.getChipId());
-	status.concat(value);
-	status.concat("\",\"speedCnt\":"); // System Instruction Cycles Per Second
-	status.concat(speedcnt*1000);
-	status.concat(",\"resetInfo\":\"");
-	status.concat(ESP.getResetInfo());
-	status.concat("\",\"vcc\":");
-	status.concat(servolt1/1000);
-	status.concat(",\"uptime\":\"");
-	status.concat(uptime);
-	uptime = "";
-	status.concat("\"}");
-	return status;
+	sprintf(uptime, "%02d:%02d:%02d", hr, mn, st);
+	// Local time
+	char localTime[10];
+	utc = now();
+	local = myTZ.toLocal(utc, &tcr);
+	sprintf(localTime, "%02d:%02d:%02d", hour(local), minute(local), second(local));
+	// IP address
+	IPAddress myIp = WiFi.localIP();
+	char sIp[16];
+    sprintf(sIp, "%d.%d.%d.%d", myIp[0], myIp[1], myIp[2], myIp[3]);
+	// Flash-chip ID
+	char flashChipId[10] = "";
+	sprintf(flashChipId, "%08x", ESP.getFlashChipId());
+	// CPU ID
+	char chipId[10] = "";
+	sprintf(chipId, "%08x", ESP.getChipId());
+	// Compose JSON
+	char buffer[1024];
+	DynamicJsonBuffer jsonBuffer;
+	JsonObject& root = jsonBuffer.createObject();
+	root["hostname"] = WiFi.hostname();
+	root["ip"] = sIp;
+	root["freeRam"] = ESP.getFreeHeap();
+	root["sdkVersion"] = ESP.getSdkVersion();
+	root["bootVersion"] = ESP.getBootVersion();
+	root["freeSketchSpace"] = ESP.getFreeSketchSpace() / 1024; // KBytes
+	root["sketchSize"] = ESP.getSketchSize() / 1024; // KBytes
+	root["flashChipId"] = flashChipId;
+	root["flashChipMode"] = ideMode == FM_QIO ? "QIO" : ideMode == FM_QOUT ? "QOUT" : ideMode == FM_DIO ? "DIO" : ideMode == FM_DOUT ? "DOUT" : "UNKNOWN";
+	root["flashSizeByID"] = ESP.getFlashChipRealSize() / 1024; // KBytes
+	root["flashSizeIDE"] = ESP.getFlashChipSize() / 1024; // KBytes
+	root["flashSpeed"] = ESP.getFlashChipSpeed()/1000000; // MHz
+	root["cpuSpeed"] = ESP.getCpuFreqMHz();
+	root["chipId"] = chipId;
+	root["speedCnt"] = speedcnt * 1000; // System Instruction Cycles Per Second
+	root["resetInfo"] = ESP.getResetInfo();
+	root["vcc"] = servolt1/1000;
+	root["uptime"] = uptime;
+	root["localTime"] = localTime;
+	root.printTo(buffer, sizeof(buffer));
+	return String(buffer);
 }
 
 String getStatus() {
@@ -372,8 +365,6 @@ void printLocalTime() {
 void timeSetup() {
   setTime(myTZ.toUTC(compileTime()));
   utc = now();
-  // printTime(utc, "UTC");
-  // Serial.println();
   local = myTZ.toLocal(utc, &tcr);
   Serial.print("Current time: ");
   printTime(local, tcr -> abbrev);
@@ -771,8 +762,8 @@ void setup() {
 	buttonsSetup();
 	dhtSetup();
 	networkSetup();
-	timeSetup();
 	firmwareSetup();
+	timeSetup();
 	mqttSetup();
 	webserverSetup();
 	mdnsSetup();

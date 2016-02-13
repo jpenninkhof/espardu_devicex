@@ -1,15 +1,16 @@
-<mvc:View 
-	controllerName="com.penninkhof.espui.controller.Diagnostics" 
-	xmlns:core="sap.ui.core" 
+<mvc:View
+	controllerName="com.penninkhof.espui.controller.Diagnostics"
+	xmlns:core="sap.ui.core"
 	xmlns:html="http://www.w3.org/1999/xhtml"
-	xmlns:mvc="sap.ui.core.mvc" 
+	xmlns:mvc="sap.ui.core.mvc"
 	xmlns:l="sap.ui.layout"
 	xmlns="sap.m">
-	<Page 
-		title="{status>/config/friendlyName} {i18n>diagTitle}" 
-		showNavButton="true" 
+	<Page
+		title="{status>/config/friendlyName} {i18n>diagTitle}"
+		showNavButton="true"
 		navButtonPress="onNavBack">
 		<headerContent>
+			<Text text="{status>/diagnostics/localTime}" class="sapUiTinyMarginEnd" />
 			<core:Icon id="connectedIcon" src="sap-icon://disconnected" class="sapUiTinyMarginEnd" />
 		</headerContent>
 		<content>
@@ -70,6 +71,11 @@
 					numberUnit="reason"
 					type="None"
 					title="{status>/diagnostics/resetInfo}" />
+				<StandardTile
+					icon="sap-icon://badge"
+					number="IP"
+					type="None"
+					title="{status>/diagnostics/ip} {status>/diagnostics/hostname}" />
 			</TileContainer>
 		</content>
 	</Page>
