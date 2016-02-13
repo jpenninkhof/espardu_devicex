@@ -1,0 +1,67 @@
+<mvc:View 
+	controllerName="com.penninkhof.espui.controller.Configuration" 
+	xmlns:core="sap.ui.core" 
+	xmlns:html="http://www.w3.org/1999/xhtml"
+	xmlns:mvc="sap.ui.core.mvc" 
+	xmlns:f="sap.ui.layout.form"
+	xmlns:l="sap.ui.layout"
+	xmlns="sap.m">
+	<Page 
+		title="{config>/friendlyName} {i18n>configTitle}" 
+		showNavButton="true" 
+		navButtonPress="onNavBack">
+		<headerContent>
+			<core:Icon id="connectedIcon" src="sap-icon://disconnected" class="sapUiTinyMarginEnd" />
+		</headerContent>
+		<content>
+			<l:Grid
+				defaultSpan="L12 M12 S12"
+				width="auto">
+			    <l:content>
+			        <f:SimpleForm
+						editable="true" layout="ResponsiveGridLayout" title="WiFi"
+						labelSpanL="4" labelSpanM="4" emptySpanL="1" emptySpanM="1" 
+						columnsL="1" columnsM="1" class="editableForm">
+						<f:content>
+							<Label text="SSID" />
+							<Input id="ssid" value="{config>/ssid}" />
+							<Label text="Password" />
+							<Input id="psk" value="{config>/psk}" type="Password" />
+							<Label text="Repeat" />
+							<Input id="psk2" value="{config>/psk2}" type="Password" />
+							<Label text="Host name" />
+							<Input id="hostname" value="{config>/hostname}" />
+							<Label text="Friendly name" />
+							<Input id="friendlyName" value="{config>/friendlyName}" />
+						</f:content>
+					</f:SimpleForm>
+				</l:content>
+			</l:Grid>
+			<l:Grid
+				defaultSpan="L12 M12 S12"
+				width="auto">
+			    <l:content>
+			        <f:SimpleForm
+						editable="true" layout="ResponsiveGridLayout" title="MQTT"
+						labelSpanL="4" labelSpanM="4" emptySpanL="1" emptySpanM="1" 
+						columnsL="1" columnsM="1" class="editableForm">
+			            <f:content>
+							<Label text="Server" />
+							<Input id="mqttServer" value="{config>/mqttServer}" />
+							<Label text="Port" />
+							<Input id="mqttPort" value="{config>/mqttPort}" type="Number"/>
+							<Label text="Topic" />
+							<Input id="mqttTopic" value="{config>/mqttTopic}" />
+						</f:content>
+					</f:SimpleForm>
+				</l:content>
+			</l:Grid>
+		</content>
+		<footer>
+			<Toolbar>
+				<ToolbarSpacer/>
+				<Button text="Save" type="Accept" press="onAccept" />
+			</Toolbar>
+		</footer>
+	</Page>
+</mvc:View>

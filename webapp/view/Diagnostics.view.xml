@@ -1,0 +1,76 @@
+<mvc:View 
+	controllerName="com.penninkhof.espui.controller.Diagnostics" 
+	xmlns:core="sap.ui.core" 
+	xmlns:html="http://www.w3.org/1999/xhtml"
+	xmlns:mvc="sap.ui.core.mvc" 
+	xmlns:l="sap.ui.layout"
+	xmlns="sap.m">
+	<Page 
+		title="{status>/config/friendlyName} {i18n>diagTitle}" 
+		showNavButton="true" 
+		navButtonPress="onNavBack">
+		<headerContent>
+			<core:Icon id="connectedIcon" src="sap-icon://disconnected" class="sapUiTinyMarginEnd" />
+		</headerContent>
+		<content>
+			<TileContainer id="diagTiles">
+				<StandardTile
+					icon="sap-icon://physical-activity"
+					type="None"
+					number="{status>/diagnostics/cpuSpeed}"
+					numberUnit="MHz"
+					title="ESP8266 @ {status>/diagnostics/speedCnt} instruction/second"
+					info="ID: {status>/diagnostics/cpuChipId}"/>
+				<StandardTile
+					icon="sap-icon://physical-activity"
+					type="None"
+					number="{status>/diagnostics/flashSizeIDE}"
+					numberUnit="KBytes"
+					title="Flash chip mode {status>/diagnostics/flashChipMode}, speed {status>/diagnostics/flashSpeed} MHz"
+					info="ID: {status>/diagnostics/flashChipId}"/>
+				<StandardTile
+					icon="sap-icon://electrocardiogram"
+					type="None"
+					number="{status>/diagnostics/vcc}"
+					numberUnit="Volts"
+					title="Power supply"
+					info="{= ${status>/diagnostics/vcc} &lt; 2.8 ? 'Too low' : ${status>/diagnostics/vcc} &gt; 3.5 ? 'Too high' : '' }"
+					infoState="{= ${status>/diagnostics/vcc} &lt; 2.8 || ${status>/diagnostics/vcc} &gt; 3.5 ? 'Error' : 'None'}" />
+				<StandardTile
+					icon="sap-icon://present"
+					type="None"
+					number="{status>/diagnostics/uptime}"
+					title="Uptime" />
+				<StandardTile
+					icon="sap-icon://wrench"
+					type="None"
+					number="{status>/diagnostics/sdkVersion}"
+					title="Espressif SDK version" />
+				<StandardTile
+					icon="sap-icon://drill-up"
+					type="None"
+					number="{status>/diagnostics/freeRam}"
+					numberUnit="KBytes"
+					title="Free RAM" />
+				<StandardTile
+					icon="sap-icon://folder"
+					type="None"
+					number="{status>/diagnostics/sketchSize}"
+					numberUnit="KBytes"
+					title="Sketch size" />
+				<StandardTile
+					icon="sap-icon://folder-blank"
+					type="None"
+					number="{status>/diagnostics/freeSketchSpace}"
+					numberUnit="KBytes"
+					title="Free sketch space" />
+				<StandardTile
+					icon="sap-icon://wrench"
+					number="Reset"
+					numberUnit="reason"
+					type="None"
+					title="{status>/diagnostics/resetInfo}" />
+			</TileContainer>
+		</content>
+	</Page>
+</mvc:View>

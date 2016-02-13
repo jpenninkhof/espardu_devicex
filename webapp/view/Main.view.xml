@@ -1,0 +1,20 @@
+<mvc:View 
+	controllerName="com.penninkhof.espui.controller.Main" 
+	xmlns:html="http://www.w3.org/1999/xhtml" 
+	xmlns:mvc="sap.ui.core.mvc"
+	xmlns:core="sap.ui.core"
+	xmlns="sap.m">
+	
+	<Page title="{status>/config/friendlyName} {i18n>mainTitle}">
+		<headerContent>
+			<core:Icon id="connectedIcon" src="sap-icon://disconnected" class="sapUiTinyMarginEnd" />
+		</headerContent>
+		<content>
+			<TileContainer
+				id="mainMenu"
+				tiles="{app>/MainMenu}">
+				<StandardTile press="onTilePress" />
+			</TileContainer>
+		</content>
+	</Page>
+</mvc:View>
