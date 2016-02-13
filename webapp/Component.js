@@ -25,12 +25,12 @@ sap.ui.define([
 
             // create the views based on the url/hash
             this.getRouter().initialize();
-            
+
             // Start the timer to update the status model
             this.startUpdater();
 
 		},
-		
+
 		// Automatically refreshes the status model every second
 		startUpdater: function() {
 			var that = this;
@@ -44,17 +44,17 @@ sap.ui.define([
 				error: function() {
 					that.getEventBus().publish("device", "offline");
 				},
-				timeout: 1000
+				timeout: 2000
 			}).always(function() {
 				setTimeout(
-					function() { 
-						that.startUpdater(); 
-					}, 
+					function() {
+						that.startUpdater();
+					},
 					1000
 				);
 			});
 		}
-		
+
 	});
 
 });
