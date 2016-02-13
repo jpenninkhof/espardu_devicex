@@ -103,7 +103,7 @@ String getDiagnostics() {
 	JsonObject& root = jsonBuffer.createObject();
 	root["hostname"] = WiFi.hostname();
 	root["ip"] = sIp;
-	root["freeRam"] = ESP.getFreeHeap();
+	root["freeRam"] = ESP.getFreeHeap() / 1024;  // KBytes
 	root["sdkVersion"] = ESP.getSdkVersion();
 	root["bootVersion"] = ESP.getBootVersion();
 	root["freeSketchSpace"] = ESP.getFreeSketchSpace() / 1024; // KBytes
