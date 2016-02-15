@@ -32,7 +32,7 @@ const String TS_TEMPFIELD = "tsTempField";
 const String TS_HUMFIELD = "tsHumField";
 const String WG_URL = "wgUrl";
 const String WG_ID = "wgId";
-const String WG_PWD = "wgPdw";
+const String WG_PWD = "wgPwd";
 
 String config;
 DHT_Unified dht(D4, DHT22);
@@ -699,8 +699,8 @@ void webserverHandleConfig(){
 			if (root.containsKey(TS_TEMPFIELD)) { configPut(TS_TEMPFIELD, root[TS_TEMPFIELD]); }
 			if (root.containsKey(TS_HUMFIELD)) { configPut(TS_HUMFIELD, root[TS_HUMFIELD]); }
 			if (root.containsKey(WG_URL)) { configPut(WG_URL, root[WG_URL]); }
-			if (root.containsKey(WG_URL)) { configPut(WG_ID, root[WG_ID]); }
-			if (root.containsKey(WG_URL)) { configPut(WG_PWD, root[WG_PWD]); }
+			if (root.containsKey(WG_ID)) { configPut(WG_ID, root[WG_ID]); }
+			if (root.containsKey(WG_PWD)) { configPut(WG_PWD, root[WG_PWD]); }
 			server.send(200, "application/json", getConfig());
 			configSave();
 			ESP.restart();
