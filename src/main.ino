@@ -2,6 +2,7 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
+#include <ESP8266HTTPClient.h>
 #include <WiFiUdp.h>
 #include <PubSubClient.h>
 #include <FS.h>
@@ -25,23 +26,30 @@ const String MQTT_SERVER = "mqttServer";
 const String MQTT_PORT = "mqttPort";
 const String MQTT_TOPIC = "mqttTopic";
 const String FRIENDLYNAME = "friendlyName";
+const String TS_URL = "tsUrl";
+const String TS_APIKEY = "tsApi";
+const String TS_TEMPFIELD = "tsTempField";
+const String TS_HUMFIELD = "tsHumField";
+const String WG_URL = "wgUrl";
+const String WG_ID = "wgId";
+const String WG_PWD = "wgPdw";
 
 String config;
 DHT_Unified dht(D4, DHT22);
 
 ESP8266WebServer server(80);
 WiFiClient wifiClient;
-PubSubClient client(wifiClient);
+PubSubClient mqttClient(wifiClient);
 char mqttTopic[20] = "";
-unsigned long previousMillis = 0;
 
-//US Eastern Time Zone (New York, Detroit)
-TimeChangeRule myDST = {"CEDT", Last, Sun, Mar, 2, 60};    //Daylight time = UTC - 4 hours
-TimeChangeRule mySTD = {"CET", Last, Sun, Oct, 2, 120};     //Standard time = UTC - 5 hours
+TimeChangeRule myDST = {"CEDT", Last, Sun, Mar, 2, 60};
+TimeChangeRule mySTD = {"CET", Last, Sun, Oct, 2, 120};
 Timezone myTZ(myDST, mySTD);
 
 TimeChangeRule *tcr;        //pointer to the time change rule, use to get TZ abbrev
 time_t utc, local;
+float temp;
+float hum;
 
 const char * stateToJsonString(const uint8_t value) {
   return value == HIGH ? "on" : "off";
@@ -98,10 +106,9 @@ String getDiagnostics() {
 	char chipId[10] = "";
 	sprintf(chipId, "%08x", ESP.getChipId());
 	// Compose JSON
-	char buffer[1024];
+	char buffer[1024] = "";
 	DynamicJsonBuffer jsonBuffer;
 	JsonObject& root = jsonBuffer.createObject();
-	root["hostname"] = WiFi.hostname();
 	root["ip"] = sIp;
 	root["freeRam"] = ESP.getFreeHeap() / 1024;  // KBytes
 	root["sdkVersion"] = ESP.getSdkVersion();
@@ -134,8 +141,6 @@ String getStatus() {
 	state["relay2"] = stateToJsonString(digitalRead(D2));
 	state["relay3"] = stateToJsonString(digitalRead(D3));
 
-	float temp = dhtGetTemperature();
-	float hum = dhtGetHumidity();
 	if (!isnan(temp) || (!isnan(hum))) {
 		JsonObject& env = root.createNestedObject("env");
 		if (!isnan(temp)) { env["temp"] = temp; }
@@ -183,6 +188,10 @@ void configSetup()
 		root[FRIENDLYNAME] = "DeviceX";
 		root[MQTT_PORT] = "1883";
 		root[MQTT_TOPIC] = mqtt_topic;
+		root[TS_URL] = "http://api.thingspeak.com/update.json";
+		root[TS_TEMPFIELD] = "field1";
+		root[TS_HUMFIELD] = "field2";
+		root[WG_URL] = "http://weatherstation.wunderground.com/weatherstation/updateweatherstation.php";
 		root.printTo(buffer, sizeof(buffer));
 		config = String(buffer);
 		Serial.println(". fail");
@@ -209,7 +218,7 @@ void configPut(String id, String value) {
 	DynamicJsonBuffer jsonBuffer;
 	JsonObject& root = jsonBuffer.parseObject(config);
 	root[id] = value;
-	char buffer[256];
+	char buffer[1024];
 	root.printTo(buffer, sizeof(buffer));
 	config = String(buffer);
 }
@@ -425,6 +434,16 @@ float dhtGetHumidity() {
   return event.relative_humidity;
 }
 
+void dhtLoop() {
+	static unsigned long previousMillis = 0;
+	unsigned long currentMillis = millis();
+	if(currentMillis - previousMillis >= 5000) {
+		temp = dhtGetTemperature();
+		hum = dhtGetHumidity();
+		previousMillis = millis();
+	}
+}
+
 void buttonsSetup() {
   Serial.println("Initialising buttons");
   pinMode(D5, INPUT_PULLUP);
@@ -482,7 +501,7 @@ boolean relaySet(const uint8_t pin, const uint8_t value, const char* id, boolean
     Serial.print(") ");
     Serial.println(stateToJsonString(value));
     digitalWrite(pin, value);
-		if (sendMqttStatus) mqttSendStatus();
+		if (sendMqttStatus) mqttClient.publish(mqttTopic, getStatus().c_str());
 		return true;
   } else {
 		return false;
@@ -506,7 +525,7 @@ void relaySetJson(JsonObject& root) {
 		relaySetJson(root, "relay2", D2) ||
 		relaySetJson(root, "relay3", D3)
 	) {
-		mqttSendStatus();
+		mqttClient.publish(mqttTopic, getStatus().c_str());
 	}
 }
 
@@ -529,31 +548,22 @@ void mqttReceive(char* topic, byte* payload, unsigned int length) {
   relaySetJson(root);
 }
 
-void mqttSendStatus() {
-  client.publish(mqttTopic, getStatus().c_str());
-	mqttResetCountdown();
-}
-
-boolean mqttConnected() {
-	return client.connected();
-}
-
 void mqttReconnect() {
 	static unsigned long t = 0;
 	static unsigned long w = 0;
-	if (!client.connected()) {
+	if (!mqttClient.connected()) {
 		unsigned long nt = millis();
 		if (nt >= t + w) {
 			t = nt;
 			Serial.print("Attempting MQTT connection...");
-			if (client.connect(configGet(HOSTNAME).c_str())) {
+			if (mqttClient.connect(configGet(HOSTNAME).c_str())) {
 				Serial.println(" connected");
 				Serial.printf("Subscribing to %s\n", mqttTopic);
-				client.subscribe(mqttTopic);
+				mqttClient.subscribe(mqttTopic);
 				w = 0;
 			} else {
 				Serial.print("failed, rc=");
-				Serial.print(client.state());
+				Serial.print(mqttClient.state());
 				Serial.println(" try again in 10 seconds");
 				w = 10000;
 			}
@@ -563,8 +573,8 @@ void mqttReconnect() {
 
 void mqttDisconnect() {
 	Serial.println("Disconnecting MQTT client");
-	client.disconnect();
-	while (client.connected()) {
+	mqttClient.disconnect();
+	while (mqttClient.connected()) {
 		delay(100);
 	}
 }
@@ -572,33 +582,31 @@ void mqttDisconnect() {
 void mqttSetup() {
 	char * mqtt_server = new char[configGet(MQTT_SERVER).length() + 1];
 	configGet(MQTT_SERVER).toCharArray(mqtt_server, configGet(MQTT_SERVER).length() + 1);
-	client.setServer(mqtt_server, configGet(MQTT_PORT).toInt());
-	client.setCallback(mqttReceive);
+	mqttClient.setServer(mqtt_server, configGet(MQTT_PORT).toInt());
+	mqttClient.setCallback(mqttReceive);
 	sprintf(mqttTopic, configGet(MQTT_TOPIC).c_str());
-}
-
-void mqttResetCountdown() {
-	previousMillis = millis();
 }
 
 void mqttListenerLoop() {
 	if (WiFi.getMode() != WIFI_AP && configGet(MQTT_SERVER).length() > 0) {
-		if (!mqttConnected()) {
+		if (!mqttClient.connected()) {
 			mqttReconnect();
 		} else {
-			client.loop();
+			mqttClient.loop();
 		}
 	}
 }
 
 void mqttStatusLoop() {
+	static unsigned long previousMillis = 0;
 	if (WiFi.getMode() != WIFI_AP && configGet(MQTT_SERVER).length() > 0) {
-		if (!mqttConnected()) {
+		if (!mqttClient.connected()) {
 			mqttReconnect();
 		} else {
 			unsigned long currentMillis = millis();
 			if(currentMillis - previousMillis >= 5000) {
-				mqttSendStatus();
+				mqttClient.publish(mqttTopic, getStatus().c_str());
+				previousMillis = millis();
 			}
 		}
 	}
@@ -686,6 +694,13 @@ void webserverHandleConfig(){
 			if (root.containsKey(MQTT_PORT)) { configPut(MQTT_PORT, root[MQTT_PORT]); }
 			if (root.containsKey(MQTT_TOPIC)) { configPut(MQTT_TOPIC, root[MQTT_TOPIC]); }
 			if (root.containsKey(FRIENDLYNAME)) { configPut(FRIENDLYNAME, root[FRIENDLYNAME]); }
+			if (root.containsKey(TS_URL)) { configPut(TS_URL, root[TS_URL]); }
+			if (root.containsKey(TS_APIKEY)) { configPut(TS_APIKEY, root[TS_APIKEY]); }
+			if (root.containsKey(TS_TEMPFIELD)) { configPut(TS_TEMPFIELD, root[TS_TEMPFIELD]); }
+			if (root.containsKey(TS_HUMFIELD)) { configPut(TS_HUMFIELD, root[TS_HUMFIELD]); }
+			if (root.containsKey(WG_URL)) { configPut(WG_URL, root[WG_URL]); }
+			if (root.containsKey(WG_URL)) { configPut(WG_ID, root[WG_ID]); }
+			if (root.containsKey(WG_URL)) { configPut(WG_PWD, root[WG_PWD]); }
 			server.send(200, "application/json", getConfig());
 			configSave();
 			ESP.restart();
@@ -742,6 +757,43 @@ void mdnsSetup() {
 	}
 }
 
+void thingSpeakLoop() {
+	if (configGet(TS_APIKEY) == "") return;
+	static unsigned long previousMillis = 0;
+	unsigned long currentMillis = millis();
+	if(currentMillis - previousMillis >= 30000) {
+		Serial.print("Sending environment data to ThingSpeak - ");
+		HTTPClient http;
+		http.begin(configGet(TS_URL));
+		http.addHeader("X-THINGSPEAKAPIKEY", configGet(TS_APIKEY));
+		http.addHeader("Content-Type", "application/x-www-form-urlencoded");
+		int status = http.POST(
+			configGet(TS_TEMPFIELD) + "=" + String(temp, DEC) + "&" + configGet(TS_HUMFIELD) + "=" + String(hum, DEC));
+		Serial.println(status == 200 ? "OK" : String(status));
+		previousMillis = millis();
+	}
+}
+
+void wundergroundLoop() {
+	if (configGet(WG_ID) == "") return;
+	static unsigned long previousMillis = 0;
+	unsigned long currentMillis = millis();
+	if(currentMillis - previousMillis >= 300000) {
+		Serial.print("Sending environment data to Wunderground - ");
+		HTTPClient http;
+		http.begin(configGet(WG_URL) +
+			"?ID=" + configGet(WG_ID) +
+			"&PASSWORD=" + configGet(WG_PWD) +
+			"&action=updateraw" +
+			"&dateutc=now" +
+			"&tempf=" + String(temp * 9 / 5 + 32, DEC) + // Fahrenheit
+			"&humidity=" + String(hum, DEC));
+		int status = http.GET();
+		Serial.println(status == 200 ? "OK" : String(status));
+		previousMillis = millis();
+	}
+}
+
 void motd() {
 	Serial.println("\n\rBooting");
 	Serial.println("------------------------------------");
@@ -751,6 +803,15 @@ void motd() {
 	Serial.printf("Flash chip size: %u KBytes\n", ESP.getFlashChipRealSize() / 1024);
 	Serial.printf("Free heap: %u KBytes\n", ESP.getFreeHeap() / 1024);
 	Serial.println("------------------------------------");
+}
+
+void statusLoop() {
+	if (WiFi.getMode() != WIFI_AP && WiFi.status() == WL_CONNECTED) {
+		dhtLoop();
+		mqttStatusLoop();
+		thingSpeakLoop();
+		wundergroundLoop();
+	}
 }
 
 void setup() {
@@ -773,7 +834,7 @@ void setup() {
 void loop() {
 	firmwareLoop();
 	mqttListenerLoop();
-	mqttStatusLoop();
+	statusLoop();
 	buttonsLoop();
 	webserverLoop();
 }

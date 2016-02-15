@@ -75,7 +75,7 @@
 					icon="sap-icon://badge"
 					number="IP"
 					type="None"
-					title="{status>/diagnostics/ip} {status>/diagnostics/hostname}" />
+					title="{status>/diagnostics/ip} {status>/config/hostname}" />
 			</TileContainer>
 		</content>
 	</Page>

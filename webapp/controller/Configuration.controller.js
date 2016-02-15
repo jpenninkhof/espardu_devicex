@@ -10,7 +10,7 @@ sap.ui.define([
 			this.view = this.getView();
 			this.model = this.getComponent().getModel("config");
 			this.i18n = this.getComponent().getModel("i18n").getResourceBundle();
-			this.initConnectedIcon();			
+			this.initConnectedIcon();
 		},
 
 		validate: function() {
@@ -35,24 +35,17 @@ sap.ui.define([
 					valid = false;
 				}
 			}
-			if (!this.model.getProperty("/mqttServer")) {
-				this.view.byId("mqttServer").setValueState("Error").setValueStateText(this.i18n.getText("mqttServerIsRequired"));
-				valid = false;
-			}
 			if (!this.model.getProperty("/mqttPort")) {
-				this.model.setProperty("/mqttPort", "1883");				
+				this.model.setProperty("/mqttPort", "1883");
 			}
 			if (!this.model.getProperty("/mqttTopic")) {
 				if (this.model.getProperty("/hostname")) {
 					this.model.setProperty("/mqttTopic", "/devicex/" + this.model.getProperty("/hostname"));
-				} else {
-					this.view.byId("mqttTopic").setValueState("Error").setValueStateText(this.i18n.getText("mqttTopicIsRequired"));					
-					valid = false;
 				}
 			}
 			return valid;
 		},
-	
+
 		onAccept: function(event) {
 			var that = this;
 			if (this.validate()) {
@@ -80,7 +73,7 @@ sap.ui.define([
 				MessageBox.alert(this.i18n.getText("invalidEntry"));
 			}
 		}
-		
+
 	});
 
 });

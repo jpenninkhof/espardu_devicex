@@ -57,6 +57,46 @@
 					</f:SimpleForm>
 				</l:content>
 			</l:Grid>
+			<l:Grid
+				defaultSpan="L12 M12 S12"
+				width="auto">
+			    <l:content>
+			        <f:SimpleForm
+						editable="true" layout="ResponsiveGridLayout" title="ThingSpeak"
+						labelSpanL="4" labelSpanM="4" emptySpanL="1" emptySpanM="1"
+						columnsL="1" columnsM="1" class="editableForm">
+			            <f:content>
+							<Label text="URL" />
+							<Input id="tsUrl" value="{config>/tsUrl}" />
+							<Label text="API Key" />
+							<Input id="tsApi" value="{config>/tsApi}" />
+							<Label text="Temperature field" />
+							<Input id="tsTempField" value="{config>/tsTempField}" />
+							<Label text="Humidity field" />
+							<Input id="tsHumField" value="{config>/tsHumField}" />
+						</f:content>
+					</f:SimpleForm>
+				</l:content>
+			</l:Grid>
+			<l:Grid
+				defaultSpan="L12 M12 S12"
+				width="auto">
+			    <l:content>
+			        <f:SimpleForm
+						editable="true" layout="ResponsiveGridLayout" title="Wunderground"
+						labelSpanL="4" labelSpanM="4" emptySpanL="1" emptySpanM="1"
+						columnsL="1" columnsM="1" class="editableForm">
+						<f:content>
+							<Label text="URL" />
+							<Input id="wgUrl" value="{config>/wgUrl}" />
+							<Label text="Station IDy" />
+							<Input id="wgId" value="{config>/wgId}" />
+							<Label text="Password" />
+							<Input id="wgPwd" value="{config>/wgPwd}" />
+						</f:content>
+					</f:SimpleForm>
+				</l:content>
+			</l:Grid>
 		</content>
 		<footer>
 			<Toolbar>
