@@ -89,7 +89,7 @@
 						<f:content>
 							<Label text="URL" />
 							<Input id="wgUrl" value="{config>/wgUrl}" />
-							<Label text="Station IDy" />
+							<Label text="Station ID" />
 							<Input id="wgId" value="{config>/wgId}" />
 							<Label text="Password" />
 							<Input id="wgPwd" value="{config>/wgPwd}" />
