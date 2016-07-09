@@ -24,6 +24,22 @@
 						labelSpanL="4" labelSpanM="4" emptySpanL="1" emptySpanM="1"
 						columnsL="1" columnsM="1" class="editableForm">
 						<f:content>
+							<Label text="PIR Delay" />
+							<Input id="pirDelay" value="{config>/pirDelay}" />
+						</f:content>
+					</f:SimpleForm>
+				</l:content>
+			</l:Grid>
+
+			<l:Grid
+				defaultSpan="L12 M12 S12"
+				width="auto">
+			    <l:content>
+			        <f:SimpleForm
+						editable="true" layout="ResponsiveGridLayout" title="WiFi"
+						labelSpanL="4" labelSpanM="4" emptySpanL="1" emptySpanM="1"
+						columnsL="1" columnsM="1" class="editableForm">
+						<f:content>
 							<Label text="SSID" />
 							<Input id="ssid" value="{config>/ssid}" />
 							<Label text="Password" />

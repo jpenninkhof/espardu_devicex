@@ -1,3 +1,10 @@
+/*
+ * Uses D1, D2 and D3 to control relays
+ * Pin D5, D6 and D7 are connected to buttons to switch the relay states
+ * Pin D4 is connected to the DHT22
+ */
+
+
 #include <ArduinoOTA.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
@@ -33,9 +40,11 @@ const String TS_HUMFIELD = "tsHumField";
 const String WG_URL = "wgUrl";
 const String WG_ID = "wgId";
 const String WG_PWD = "wgPwd";
+const String PIR_DELAY ="pirDelay";
 
 String config;
 DHT_Unified dht(D4, DHT22);
+uint8_t presence[16];
 
 ESP8266WebServer server(80);
 WiFiClient wifiClient;
@@ -140,6 +149,7 @@ String getStatus() {
 	state["relay1"] = stateToJsonString(digitalRead(D1));
 	state["relay2"] = stateToJsonString(digitalRead(D2));
 	state["relay3"] = stateToJsonString(digitalRead(D3));
+    state["presence"] = stateToJsonString(presence[D0]);
 
 	if (!isnan(temp) || (!isnan(hum))) {
 		JsonObject& env = root.createNestedObject("env");
@@ -192,6 +202,7 @@ void configSetup()
 		root[TS_TEMPFIELD] = "field1";
 		root[TS_HUMFIELD] = "field2";
 		root[WG_URL] = "http://weatherstation.wunderground.com/weatherstation/updateweatherstation.php";
+        root[PIR_DELAY] = "300000"; // 5 minutes
 		root.printTo(buffer, sizeof(buffer));
 		config = String(buffer);
 		Serial.println(". fail");
@@ -410,7 +421,7 @@ float dhtGetTemperature() {
   sensors_event_t event;
   dht.temperature().getEvent(&event);
   if (isnan(event.temperature)) {
-    Serial.print("Error reading temperature! ");
+    // Serial.print("Error reading temperature! ");
   }
   else {
     Serial.print("Temperature: ");
@@ -424,7 +435,7 @@ float dhtGetHumidity() {
   sensors_event_t event;
   dht.humidity().getEvent(&event);
   if (isnan(event.relative_humidity)) {
-    Serial.println("Error reading humidity!");
+    // Serial.println("Error reading humidity!");
   }
   else {
     Serial.print("Humidity: ");
@@ -442,6 +453,11 @@ void dhtLoop() {
 		hum = dhtGetHumidity();
 		previousMillis = millis();
 	}
+}
+
+void pirSetup() {
+  Serial.println("Initialising PIR");
+  pinMode(D0, INPUT_PULLUP);
 }
 
 void buttonsSetup() {
@@ -474,10 +490,60 @@ void buttonLoop(const uint8_t buttonPin, const uint8_t relayPin, const char* id)
   }
 }
 
+void pirLoop(const uint8_t pirPin, const char* id) {
+  static int val[16];
+  static int pres[16];
+  static unsigned long t[16];
+  static long DELAY = 5000;
+  int state = digitalRead(pirPin);
+  if (state != val[pirPin]) {
+    val[pirPin] = state;
+    Serial.print("Motion change: [");
+    Serial.print(espToNodePin(pirPin));
+    Serial.print("/");
+    Serial.print(pirPin);
+    Serial.print(" @ ");
+    printLocalTime();
+    Serial.print("] Change to ");
+    Serial.println(state);
+    if (state == 0) {
+        t[pirPin] = millis();
+    } else {
+        if (pres[pirPin] != state) {
+            pres[pirPin] = state;
+            Serial.print("Presence change: [");
+            Serial.print(espToNodePin(pirPin));
+            Serial.print("/");
+            Serial.print(pirPin);
+            Serial.print(" @ ");
+            printLocalTime();
+            Serial.println("] Change to: present");
+            mqttClient.publish(mqttTopic, getStatus().c_str());
+       }
+    }
+  }
+  if (val[pirPin] == 0 && pres[pirPin] == 1 && millis() - t[pirPin] > configGet(PIR_DELAY).toInt()) {
+      pres[pirPin] = 0;
+      Serial.print("Presence change: [");
+      Serial.print(espToNodePin(pirPin));
+      Serial.print("/");
+      Serial.print(pirPin);
+      Serial.print(" @ ");
+      printLocalTime();
+      Serial.println("] Change to: not present");
+      mqttClient.publish(mqttTopic, getStatus().c_str());
+  }
+  presence[pirPin] = uint8_t(pres[pirPin]);
+}
+
 void buttonsLoop() {
   buttonLoop(D5, D1, "switch1");
   buttonLoop(D6, D2, "switch2");
   buttonLoop(D7, D3, "switch3");
+}
+
+void pirsLoop() {
+    pirLoop(D0, "pir1");
 }
 
 void relaySetup() {
@@ -701,6 +767,7 @@ void webserverHandleConfig(){
 			if (root.containsKey(WG_URL)) { configPut(WG_URL, root[WG_URL]); }
 			if (root.containsKey(WG_ID)) { configPut(WG_ID, root[WG_ID]); }
 			if (root.containsKey(WG_PWD)) { configPut(WG_PWD, root[WG_PWD]); }
+            if (root.containsKey(PIR_DELAY)) { configPut(PIR_DELAY, root[PIR_DELAY]); }
 			server.send(200, "application/json", getConfig());
 			configSave();
 			ESP.restart();
@@ -821,6 +888,7 @@ void setup() {
 	configSetup();
 	relaySetup();
 	buttonsSetup();
+    pirSetup();
 	dhtSetup();
 	networkSetup();
 	firmwareSetup();
@@ -836,5 +904,6 @@ void loop() {
 	mqttListenerLoop();
 	statusLoop();
 	buttonsLoop();
+    pirsLoop();
 	webserverLoop();
 }

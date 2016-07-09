@@ -2,7 +2,8 @@
 
 SRC=webapp
 DEST=dist
-UI5_VERSION=1.32.11
+#UI5_VERSION=1.34.12
+UI5_VERSION=1.36.15
 UI5_TARBALL=openui5-runtime-$UI5_VERSION.zip
 UI5_URL=https://openui5.hana.ondemand.com/downloads/$UI5_TARBALL
 

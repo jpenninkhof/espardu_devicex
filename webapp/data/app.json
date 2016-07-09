@@ -28,6 +28,11 @@
 			}
 		},
 		{
+			"icon": "sap-icon://person-placeholder",
+			"title": "Presence",
+			"number": "{status>/state/presence}"
+		},
+		{
 			"icon": "sap-icon://temperature",
 			"title": "Temperature",
 			"number": "{status>/env/temp}",
@@ -42,12 +47,12 @@
 		{
 			"icon": "sap-icon://settings",
 			"title": "Configuration",
-			"target": "Configuration" 
+			"target": "Configuration"
 		},
 		{
 			"icon": "sap-icon://stethoscope",
 			"title": "Diagnostics",
-			"target": "Diagnostics" 
+			"target": "Diagnostics"
 		}
 	]
 }
