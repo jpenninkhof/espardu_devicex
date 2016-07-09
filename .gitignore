@@ -1,3 +1,5 @@
 .pioenvs
 .clang_complete
-node_modules
+.gcc-flags.json
+data/ui5
+data/www

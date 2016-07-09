@@ -2,8 +2,8 @@
  * Uses D1, D2 and D3 to control relays
  * Pin D5, D6 and D7 are connected to buttons to switch the relay states
  * Pin D4 is connected to the DHT22
+ * Pin D0 is connected to the PIR
  */
-
 
 #include <ArduinoOTA.h>
 #include <ESP8266WiFi.h>
@@ -141,7 +141,7 @@ String getDiagnostics() {
 }
 
 String getStatus() {
-	char buffer[1024];
+	char buffer[1280];
 	DynamicJsonBuffer jsonBuffer;
 	JsonObject& root = jsonBuffer.createObject();
 
