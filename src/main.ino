@@ -533,7 +533,7 @@ void pirLoop(const uint8_t pirPin, const char* id) {
       Serial.println("] Change to: not present");
       mqttClient.publish(mqttTopic, getStatus().c_str());
   }
-  presence[pirPin] = uint8_t(pres[pirPin]);
+  presence[pirPin] = pres[pirPin] == 0 ? LOW : HIGH;
 }
 
 void buttonsLoop() {
